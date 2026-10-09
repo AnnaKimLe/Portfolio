@@ -24,18 +24,20 @@
     font-size: 12px;
     line-height: 1.6;
   }
-  .wrap { width: 1010px; max-width: 100%; }
-  .banner { position: relative; width: 100%; aspect-ratio: 16 / 6; container-type: inline-size; background: #03051a; outline: 1px solid rgba(143, 180, 255, 0.22); outline-offset: -1px; overflow: hidden; cursor: crosshair; touch-action: pan-y; }
+  .wrap { width: 100%; height: 100%; }
+  .banner { position: relative; width: 100%; height: 100%; container-type: size; display: grid; place-items: center; background: #03051a; outline: 1px solid rgba(143, 180, 255, 0.22); outline-offset: -1px; overflow: hidden; cursor: crosshair; touch-action: pan-y; }
+  /* the composition (wolves, text, circles) keeps a 16:6 shape and sits centred; the background fills any frame */
+  .stage { position: relative; width: min(100cqw, 266.667cqh); aspect-ratio: 16 / 6; container-type: inline-size; }
   .banner canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   .ov { position: absolute; pointer-events: none; color: var(--white); text-shadow: 0 0 12px rgba(120, 160, 255, 0.55); }
-  .name { font-family: "Alte Haas Grotesk", "Arimo", "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 700; font-style: normal; letter-spacing: 0.02em; font-size: clamp(15px, 3.8cqw, 50px); line-height: 1; }
-  .meta { font-size: clamp(7px, 1cqw, 12px); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 0.7em; color: var(--ice); }
+  .name { font-family: "Alte Haas Grotesk", "Arimo", "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 700; font-style: normal; letter-spacing: 0.02em; font-size: max(11px, 3.8cqw); line-height: 1; }
+  .meta { font-size: max(7px, 1cqw); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 0.7em; color: var(--ice); }
   .ov-tl { left: 3.2cqw; top: 4.2cqw; }
   .ov-bl { left: 3.2cqw; bottom: 3.6cqw; }
   .ov-tr { right: 3.2cqw; top: 4.2cqw; text-align: right; }
-  .hud { font-size: clamp(6px, 0.9cqw, 11px); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ice); line-height: 1.8; transition: opacity 0.08s linear; font-variant-numeric: tabular-nums; }
+  .hud { font-size: max(6px, 0.9cqw); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ice); line-height: 1.8; transition: opacity 0.08s linear; font-variant-numeric: tabular-nums; }
   @container (max-width: 520px) { .hud-extra { display: none; } }
-  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+  html, body { height: 100%; margin: 0; padding: 0; background: transparent; overflow: hidden; }
 </style>
 
 </head>
@@ -43,9 +45,11 @@
 <div class="wrap">
   <div class="banner" id="banner">
     <canvas id="c" aria-hidden="true"></canvas>
-    <div class="ov ov-tl hud">Canis / 02 units<br><span class="hud-extra" id="hudTrack">Track: scanning</span></div>
-    <div class="ov ov-tr hud"><span class="hud-extra">Vel <span id="hudVel">0.82</span> · Gait 4/4</span></div>
-    <div class="ov ov-bl"><div class="name">ANNA LE</div><div class="meta">Designer · Portfolio 2026</div></div>
+    <div class="stage" id="stage">
+      <div class="ov ov-tl hud">Canis / 02 units<br><span class="hud-extra" id="hudTrack">Track: scanning</span></div>
+      <div class="ov ov-tr hud"><span class="hud-extra">Vel <span id="hudVel">0.82</span> · Gait 4/4</span></div>
+      <div class="ov ov-bl"><div class="name">ANNA LE</div><div class="meta">Designer · Portfolio 2026</div></div>
+    </div>
   </div>
 </div>
 
@@ -213,8 +217,10 @@
     var rect = banner.getBoundingClientRect();
     var w = rect.width, h = rect.height;
     if (!w || !h) return false;
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    S.w = w; S.h = h; S.dpr = dpr;
+    var dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(5e6 / (w * h))));
+    var sr = document.getElementById('stage').getBoundingClientRect();
+    var ox = sr.left - rect.left, oy = sr.top - rect.top, dw = sr.width, dh = sr.height;
+    S.w = w; S.h = h; S.dpr = dpr; S.ox = ox; S.oy = oy; S.dw = dw; S.dh = dh;
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -225,7 +231,7 @@
     bloom(bx, w * 0.74, h * 0.4, w * 0.5, h * 0.7, [[0, 'rgba(60,100,255,0.42)'], [0.5, 'rgba(30,60,200,0.16)'], [1, 'rgba(30,60,200,0)']]);
     bloom(bx, w * 0.1, h * 0.8, w * 0.3, h * 0.4, [[0, 'rgba(20,40,160,0.5)'], [1, 'rgba(20,40,160,0)']]);
     bx.strokeStyle = 'rgba(143,180,255,0.05)'; bx.lineWidth = 1;
-    var step = Math.max(24, w / 26), k;
+    var step = Math.max(24, dw / 26), k;
     for (k = 0; k < w; k += step) { bx.beginPath(); bx.moveTo(k + 0.5, 0); bx.lineTo(k + 0.5, h); bx.stroke(); }
     for (k = 0; k < h; k += step) { bx.beginPath(); bx.moveTo(0, k + 0.5); bx.lineTo(w, k + 0.5); bx.stroke(); }
     bx.strokeStyle = 'rgba(143,180,255,0.14)';
@@ -238,25 +244,26 @@
     }
 
     // geometry: pack placement (shadow near the Portfolio line, paws clear of the name)
-    var hh = 0.66 * w / WR;
-    var fyR = 0.47, fyA = 0.42;
+    var hh = 0.66 * dw / WR;
+    var cyR = oy + 0.47 * dh, cyA = oy + 0.42 * dh;
     var by = baselineOf('.meta');
     if (by != null) {
-      fyR = (by - 0.3865 * hh) / h; fyA = fyR - 0.05;
+      cyR = by - 0.3865 * hh; cyA = cyR - 0.05 * dh;
       var nt = topOf('.name');
       if (nt != null) {
-        var paw = fyA * h - hh / 2 + 0.7253 * hh + 9;
-        if (paw > nt) { var sh = (paw - nt) / h; fyR -= sh; fyA -= sh; }
+        var paw = cyA - hh / 2 + 0.7253 * hh + 9;
+        if (paw > nt) { var sh = paw - nt; cyR -= sh; cyA -= sh; }
       }
     }
-    var boxR = wolfBox(w, h, 0.57, fyR, 0.66), boxA = wolfBox(w, h, 0.43, fyA, 0.66);
+    var boxR = { x: ox + 0.24 * dw, y: cyR - hh / 2, w: 0.66 * dw, h: hh };
+    var boxA = { x: ox + 0.10 * dw, y: cyA - hh / 2, w: 0.66 * dw, h: hh };
 
     // ink wolves (ghost) with rim light
     S.ghost = mkLayer(w, h, dpr);
     realWolves(S.ghost.x, w, h, dpr, boxR, { body: '#16299f', bodyAlpha: 0.62, rim: '#8fb4ff', glow: '#5f8cff', blur: 16, glowAlpha: 0.75, dx: -2, dy: -2 });
 
     // glyph wolves
-    var cell = clamp(w / 250, 3.2, 6);
+    var cell = clamp(dw / 250, 3.2, 6);
     var tr = traceGlyphs(w, h, dpr, boxA, cell, 51);
     S.glyphs = tr.list; S.fs = tr.fs;
     S.font = '700 ' + tr.fs + 'px "JetBrains Mono", ui-monospace, monospace';
@@ -281,8 +288,8 @@
     });
 
     // circle system
-    S.rx = w * 0.72; S.ry = h * 0.28; S.arcR = w * 0.17;
-    var oldCy = h * 0.4, R = S.arcR;
+    S.rx = ox + dw * 0.72; S.ry = oy + dh * 0.28; S.arcR = dw * 0.17;
+    var oldCy = oy + dh * 0.4, R = S.arcR;
     function asn(yy) { return Math.asin(clamp((yy - S.ry) / R, -1, 1)); }
     S.aR0 = asn(oldCy + R * Math.sin(-0.5));
     S.aR1 = Math.min(asn(oldCy + R * Math.sin(0.9)), 1.35);
@@ -292,9 +299,9 @@
     // scope marks (same layout as the still)
     var rm = rng(12); S.marks = [];
     for (k = 0; k < 14; k++) {
-      var mx = (0.5 + rm() * 0.49) * w, my = (0.04 + rm() * 0.71) * h;
+      var mx = ox + (0.5 + rm() * 0.49) * dw, my = oy + (0.04 + rm() * 0.71) * dh;
       var big = rm() < 0.18;
-      var rad = (big ? 7 + rm() * 8 : 2 + rm() * 3.2) * (w / 1200 + 0.4);
+      var rad = (big ? 7 + rm() * 8 : 2 + rm() * 3.2) * (dw / 1200 + 0.4);
       var al = 0.45 + rm() * 0.5;
       S.marks.push({ x: mx, y: my, r: rad, a: al, z: 0.4 + hsh(k * 31) * 0.9, ph: hsh(k * 17) * 50 });
     }
@@ -324,12 +331,12 @@
   }
 
   function render(t, dt) {
-    var w = S.w, h = S.h, dpr = S.dpr, i;
+    var w = S.w, h = S.h, dpr = S.dpr, dw = S.dw, dh = S.dh, ps = clamp(S.dw / 1010, 0.4, 1.5), i;
 
     // pointer targets and smoothing
     if (!ptr.inside) {
-      tgt.x = S.rx + w * 0.05 * Math.sin(t * 0.4);
-      tgt.y = S.ry + h * 0.07 * Math.sin(t * 0.55 + 1);
+      tgt.x = S.rx + dw * 0.05 * Math.sin(t * 0.4);
+      tgt.y = S.ry + dh * 0.07 * Math.sin(t * 0.55 + 1);
     }
     var kk = 1 - Math.exp(-dt * 9);
     prev.x = cur.x; prev.y = cur.y;
@@ -339,10 +346,10 @@
     var pk = 1 - Math.exp(-dt * 3);
     var ntx = ptr.inside || ptr.nx !== 0.5 ? ptr.nx : 0.5 + 0.1 * Math.sin(t * 0.3);
     var nty = ptr.inside || ptr.ny !== 0.5 ? ptr.ny : 0.5 + 0.1 * Math.sin(t * 0.37 + 2);
-    par.ax += ((-(ntx - 0.5) * 22) - par.ax) * pk;
-    par.ay += ((-(nty - 0.5) * 9) - par.ay) * pk;
-    par.gx += (((ntx - 0.5) * 12) - par.gx) * pk;
-    par.gy += (((nty - 0.5) * 6) - par.gy) * pk;
+    par.ax += ((-(ntx - 0.5) * 22 * ps) - par.ax) * pk;
+    par.ay += ((-(nty - 0.5) * 9 * ps) - par.ay) * pk;
+    par.gx += (((ntx - 0.5) * 12 * ps) - par.gx) * pk;
+    par.gy += (((nty - 0.5) * 6 * ps) - par.gy) * pk;
 
     // background
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -365,7 +372,7 @@
       ctx.strokeStyle = 'rgba(160,190,255,' + ((0.2 - n * 0.035) * fl) + ')';
       ctx.lineWidth = 1;
       if (n === 2) { ctx.setLineDash([3, 9]); ctx.lineDashOffset = -t * 10; }
-      ctx.beginPath(); ctx.arc(ccx, ccy, w * f, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(ccx, ccy, dw * f, 0, Math.PI * 2); ctx.stroke();
       ctx.setLineDash([]);
     });
     ctx.strokeStyle = 'rgba(235,244,255,' + (0.85 * fl) + ')'; ctx.lineWidth = 1.6;
@@ -373,7 +380,7 @@
     ctx.beginPath(); ctx.arc(ccx, ccy, S.arcR, S.aL0, S.aL1); ctx.stroke();
     ctx.restore();
     var rot = (ntx - 0.5) * 0.3 + t * 0.012;
-    rays(ctx, ccx, ccy, [0.5, 2.1, 1.3, 2.8, 0.0, 1.8].map(function (a) { return a + rot; }), w * 0.45, '230,240,255', 0.55 * fl, 1.2);
+    rays(ctx, ccx, ccy, [0.5, 2.1, 1.3, 2.8, 0.0, 1.8].map(function (a) { return a + rot; }), dw * 0.45, '230,240,255', 0.55 * fl, 1.2);
 
     // scope marks flicker and drift at their own depth
     for (i = 0; i < S.marks.length; i++) {
@@ -398,7 +405,7 @@
     var gOn = t < glitch.until;
     var ax = par.ax, ay = par.ay;
     var cxg = cur.x - ax, cyg = cur.y - ay;
-    var RR = w * 0.14, RR2 = RR * RR;
+    var RR = dw * 0.14, RR2 = RR * RR;
     var scanX = ((t * 0.16) % 1.5 - 0.25) * w;
     var rate = 6, slotFast = Math.floor(t * 14);
     var a = S.asc.x;
@@ -454,7 +461,7 @@
       ctx.fillRect(trail[i].x - 1, trail[i].y - 1, 2, 2);
     }
     ctx.save();
-    var rr = Math.max(9, w * 0.014) * (1 + Math.min(speed / 3000, 0.25));
+    var rr = Math.max(9, dw * 0.014) * (1 + Math.min(speed / 3000, 0.25));
     ctx.strokeStyle = '#f2f8ff'; ctx.lineWidth = 1.3;
     ctx.shadowColor = '#8fb4ff'; ctx.shadowBlur = 8 * dpr;
     ctx.globalAlpha = (hsh(Math.floor(t * 20) * 3) > 0.05) ? 1 : 0.55;
@@ -465,9 +472,9 @@
     ctx.moveTo(cur.x, cur.y - rr * 2.2); ctx.lineTo(cur.x, cur.y - rr * 1.2);
     ctx.moveTo(cur.x, cur.y + rr * 1.2); ctx.lineTo(cur.x, cur.y + rr * 2.2);
     ctx.stroke();
-    if (w > 520) {
+    if (dw > 520) {
       ctx.shadowBlur = 0; ctx.fillStyle = '#cfe0ff';
-      ctx.font = '400 ' + Math.max(8, w * 0.0085) + 'px "JetBrains Mono", monospace';
+      ctx.font = '400 ' + Math.max(8, dw * 0.0085) + 'px "JetBrains Mono", monospace';
       ctx.fillText('X ' + (cur.x / w).toFixed(2) + '  Y ' + (cur.y / h).toFixed(2), cur.x + rr * 2.6, cur.y - rr * 0.4);
     }
     ctx.restore();
@@ -520,12 +527,12 @@
   function init() {
     if (!build()) { setTimeout(init, 100); return; }
     if (reduce) renderOnce(); else start();
-    var timer, lastW = S.w;
+    var timer, lastW = S.w, lastH = S.h;
     if (window.ResizeObserver) {
       new ResizeObserver(function () {
-        var wNow = banner.getBoundingClientRect().width;
-        if (Math.abs(wNow - lastW) < 2) return;
-        lastW = wNow; clearTimeout(timer);
+        var rNow = banner.getBoundingClientRect();
+        if (Math.abs(rNow.width - lastW) < 2 && Math.abs(rNow.height - lastH) < 2) return;
+        lastW = rNow.width; lastH = rNow.height; clearTimeout(timer);
         timer = setTimeout(function () { build(); if (reduce) renderOnce(); }, 150);
       }).observe(banner);
     }
