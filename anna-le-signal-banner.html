@@ -16,19 +16,16 @@
     --white: #f6faff;
     --haze: #8fb4ff;
     --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-    color-scheme: dark;
   }
   body {
-    background: var(--night);
+    background: transparent;
     color: var(--ice);
     font-family: var(--mono);
     font-size: 12px;
     line-height: 1.6;
-    padding-inline: clamp(16px, 3vw, 40px);
-    padding-block: 24px 40px;
   }
-  .wrap { max-width: 1680px; margin-inline: auto; display: flex; flex-direction: column; gap: 14px; }
-  .banner { position: relative; width: 100%; aspect-ratio: 16 / 6; container-type: inline-size; background: #03051a; outline: 1px solid rgba(143, 180, 255, 0.22); overflow: hidden; cursor: crosshair; touch-action: pan-y; }
+  .wrap { width: 1010px; max-width: 100%; }
+  .banner { position: relative; width: 100%; aspect-ratio: 16 / 6; container-type: inline-size; background: #03051a; outline: 1px solid rgba(143, 180, 255, 0.22); outline-offset: -1px; overflow: hidden; cursor: crosshair; touch-action: pan-y; }
   .banner canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   .ov { position: absolute; pointer-events: none; color: var(--white); text-shadow: 0 0 12px rgba(120, 160, 255, 0.55); }
   .name { font-family: "Alte Haas Grotesk", "Arimo", "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 700; font-style: normal; letter-spacing: 0.02em; font-size: clamp(15px, 3.8cqw, 50px); line-height: 1; }
@@ -38,9 +35,7 @@
   .ov-tr { right: 3.2cqw; top: 4.2cqw; text-align: right; }
   .hud { font-size: clamp(6px, 0.9cqw, 11px); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ice); line-height: 1.8; transition: opacity 0.08s linear; font-variant-numeric: tabular-nums; }
   @container (max-width: 520px) { .hud-extra { display: none; } }
-  .hint { margin: 0; color: #8da6df; letter-spacing: 0.04em; }
-  html { color-scheme: dark; }
-  body { margin: 0; }
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
 </style>
 
 </head>
@@ -52,7 +47,6 @@
     <div class="ov ov-tr hud"><span class="hud-extra">Vel <span id="hudVel">0.82</span> · Gait 4/4</span></div>
     <div class="ov ov-bl"><div class="name">ANNA LE</div><div class="meta">Designer · Portfolio 2026</div></div>
   </div>
-  <p class="hint">Move your cursor across the banner. The glyph wolves lean, flicker and decode around the reticle.</p>
 </div>
 
 <script>
